@@ -3,16 +3,15 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "endstone-antibundleduping"
-version = "1.0.0"
+name = "endstone-bundle-anti-dupe"
+version = "0.1.0"
 description = "A plugin that disabled bundle duplication."
 authors = [
     { name = "Maki" }
 ]
 dependencies = [
-    "endstone",
-    "nbtlib"
+    "endstone"
 ]
 
 [project.entry-points."endstone"]
-"antibundleduping" = "endstone_bundle_anti_dupe.plugin:AntiBundleDuping"
+"bundle_anti_dupe" = "endstone_bundle_anti_dupe.plugin:AntiBundleDuping"

@@ -13,9 +13,22 @@ class AntiBundleDuping(Plugin):
     @event_handler(priority=EventPriority.HIGH)
     def on_player_interact(self, event: PlayerInteractEvent):
         block = event.block
-        if not block:
+        if not block or "hopper" not in block.type:
             return
-        if "hopper" in block.type.name.lower():
-            player = event.player
-            """Make the player can't put bundles inside hoppers"""
-            
+        player = event.player
+        has_bundle = False
+        for item in player.inventory.contents:
+            if item and "bundle" in item.type.id:
+                has_bundle = True
+                break
+        if not has_bundle:
+            main_hand = player.inventory.item_in_main_hand
+            off_hand = player.inventory.item_in_off_hand
+            if (main_hand and "bundle" in main_hand.type.id) or \
+                (off_hand and "bundle" in off_hand.type.id):
+                has_bundle = True
+        if has_bundle:
+            event.is_cancelled = True
+            player.send_message(
+                "§cYou can't use a hopper while holding a bundle to prevent duping exploits!")
+            self.logger.info(f"A duping exploit attempt was prevented for {player.name}")
