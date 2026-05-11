@@ -4,7 +4,7 @@ from endstone.event import EventPriority, event_handler, PlayerInteractEvent, Pl
 class AntiBundleDuping(Plugin):
     api_version = "0.11"
     
-    BLOCKED_CONTAINERS = ["hopper", "chest", "barrel", "shulker_box"]
+    BLOCKED_CONTAINERS = ["hopper", "chest", "barrel", "shulker_box", "dropper"]
     BLOCKED_ENTITIES = ["chest", "hopper"]
     
     def on_load(self):
