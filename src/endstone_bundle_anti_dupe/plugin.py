@@ -17,10 +17,12 @@ class AntiBundleDuping(Plugin):
             return
         player = event.player
         has_bundle = False
+        
         for item in player.inventory.contents:
             if item and "bundle" in item.type.id:
                 has_bundle = True
                 break
+            
         if not has_bundle:
             main_hand = player.inventory.item_in_main_hand
             off_hand = player.inventory.item_in_off_hand

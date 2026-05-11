@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "endstone-bundle-anti-dupe"
 version = "0.1.0"
-description = "A plugin that disabled bundle duplication."
+description = "A plugin that disables bundle duplication."
 authors = [
     { name = "Maki" }
 ]
