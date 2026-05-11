@@ -1,5 +1,5 @@
 from endstone.plugin import Plugin
-from endstone.event import EventPriority, event_handler, PlayerInteractEvent, PlayerInteractActorEvent
+from endstone.event import EventPriority, event_handler, PlayerInteractEvent, PlayerInteractActorEvent, PlayerDropItemEvent
 
 class AntiBundleDuping(Plugin):
     api_version = "0.11"
@@ -58,4 +58,13 @@ class AntiBundleDuping(Plugin):
         if self.has_bundle(event.player):
             event.is_cancelled = True
             self.cancel_interaction(event.player, str(actor_type))
+            
+    @event_handler(priority=EventPriority.HIGH)
+    def on_player_drop_item(self, event: PlayerDropItemEvent):
+        item_type = event.item.type
+        if item_type and "bundle" in item_type.id:
+            # BUG: When cancelling the drop event, the item disappears from the player's inventory.
+            event.is_cancelled = True
+            event.player.send_message("§cYou can't drop a bundle to prevent duping exploits!")
+            self.logger.info(f"Duping attempt prevented for {event.player.name} by dropping a bundle")
     
