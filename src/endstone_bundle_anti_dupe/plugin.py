@@ -1,73 +1,61 @@
 from endstone.plugin import Plugin
-from endstone.event import EventPriority, event_handler, PlayerInteractEvent, PlayerInteractActorEvent, PlayerDropItemEvent
+from endstone.event import EventPriority, event_handler, PacketSendEvent, PlayerInteractEvent
 
 class AntiBundleDuping(Plugin):
     api_version = "0.11"
     
-    BLOCKED_CONTAINERS = ["hopper", "chest", "barrel", "shulker_box", "dropper", "dispenser"]
-    BLOCKED_ENTITIES = ["chest", "hopper"]
-    
     def on_load(self):
-        self.logger.info("Anti-Bundle-Duping has been loaded!")
+        self.logger.info("Anti-Bundle-Duping loaded!")
 
     def on_enable(self):
-        self.logger.info("Anti-Bundle-Duping has been enabled!")
+        self.logger.info("Anti-Bundle-Duping enabled!")
         self.register_events(self)
+        self.last_hopper = {}
+        self.hoppers_to_clean = set()
+        
+        # Scheduler para limpiar tolvas marcadas
+        self.server.scheduler.run_task(
+            self,
+            self.clean_marked_hoppers,
+            period=1  # Cada tick
+        )
     
-    def is_block_container(self, block_type) -> bool:
-        for container in self.BLOCKED_CONTAINERS:
-            if container in block_type:
-                return True
-        return False
-    
-    def is_entity_container(self, entity_type) -> bool:
-        for container in self.BLOCKED_ENTITIES:
-            if container in entity_type:
-                return True
-        return False
-    
-    def has_bundle_in_inventory(self, player) -> bool:
-        for item in player.inventory.contents:
-            if item and "bundle" in item.type.id:
-                return True
-        main_hand = player.inventory.item_in_main_hand
-        off_hand = player.inventory.item_in_off_hand
-        return (main_hand and "bundle" in main_hand.type.id) or \
-               (off_hand and "bundle" in off_hand.type.id)
-    
-    def cancel_interaction(self, player, message):
-        player.send_message("§cYou can't use a container while having a bundle in your inventory to prevent duping exploits!")
-        self.logger.info(f"Duping attempt prevented for {player.name}")
-    
-    @event_handler(priority=EventPriority.HIGH)
+    @event_handler
     def on_player_interact(self, event: PlayerInteractEvent):
-        if not event.player:
-            return
-        block = event.block
-        if not block or not self.is_block_container(block.type):
+        if not event.block or "hopper" not in event.block.type:
             return
         
-        if self.has_bundle_in_inventory(event.player):
-            event.is_cancelled = True
-            self.cancel_interaction(event.player, block.type)
+        player = event.player
+        # Guardar ubicación como enteros para evitar problemas
+        self.last_hopper[player.name] = (event.block.x, event.block.y, event.block.z)
     
-    @event_handler(priority=EventPriority.HIGH)
-    def on_player_interact_actor(self, event: PlayerInteractActorEvent):
-        actor_type = event.actor.type
-        if not actor_type or not self.is_entity_container(actor_type):
+    @event_handler(priority=EventPriority.MONITOR)
+    def on_packet_send(self, event: PacketSendEvent):
+        if event.packet_id != 49:
             return
-        
-        if self.has_bundle_in_inventory(event.player):
-            event.is_cancelled = True
-            self.cancel_interaction(event.player, str(actor_type))
+        if b'bundle' not in event.payload.lower():
+            return
+        player = event.player
+        if not player or player.name not in self.last_hopper:
+            return
+        hopper_pos = self.last_hopper[player.name]
+        self.hoppers_to_clean.add(hopper_pos)
+        self.logger.info(f"Hopper marked for cleaning: {hopper_pos}")
+    
+    def clean_marked_hoppers(self):
+        if not self.hoppers_to_clean:
+            return
+        level = self.server.level
+        for hopper_pos in list(self.hoppers_to_clean):
+            x, y, z = hopper_pos
+            for dimension in level.dimensions:
+                try:
+                    block = dimension.get_block_at(int(x), int(y), int(z))
+                    if "hopper" in block.type:
+                        block.set_type("minecraft:air", apply_physics=False)
+                        block.set_type("minecraft:hopper", apply_physics=False)
+                        self.logger.info(f"Cleaned Hopper in: {hopper_pos}")
+                except Exception as e:
+                    self.logger.warning(f"Error while cleaning executing: {e}")
             
-    @event_handler(priority=EventPriority.HIGH)
-    def on_player_drop_item(self, event: PlayerDropItemEvent):
-        item_type = event.item.type
-        sender = event.player
-        if item_type and "bundle" in item_type.id:
-            event.is_cancelled = True
-            sender.inventory.add_item(event.item)
-            sender.send_message("§cYou can't drop a bundle to prevent duping exploits!")
-            self.logger.info(f"Duping attempt prevented for {sender.name} by dropping a bundle")
-    
+            self.hoppers_to_clean.remove(hopper_pos)
