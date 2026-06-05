@@ -42,7 +42,7 @@ class AntiBundleDuping(Plugin):
 
         hopper_pos = self.last_hopper.pop(player.name)  # ← limpiar tras usar
         self.hoppers_to_clean.add(hopper_pos)
-        self.logger.info(f"Intento de duping en: {hopper_pos} por {player.name}")
+        self.logger.info(f"Dupping attempt in: {hopper_pos} by {player.name}")
 
     def clean_marked_hoppers(self):
         if not self.hoppers_to_clean:
@@ -57,7 +57,7 @@ class AntiBundleDuping(Plugin):
                     if "hopper" in block.type:
                         block.set_type("minecraft:air", apply_physics=False)
                         block.set_type("minecraft:hopper", apply_physics=False)
-                        self.logger.info(f"Hopper limpiado en: {hopper_pos}")
+                        self.logger.info(f"Hopper cleaded: {hopper_pos}")
             except Exception as e:
                 self.logger.warning(f"Error while cleaning: {e}")
             finally:
