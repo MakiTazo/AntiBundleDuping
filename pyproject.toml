@@ -7,7 +7,7 @@ name = "endstone-bundle-anti-dupe"
 version = "0.1.4"
 description = "A plugin that disables bundle duplication."
 authors = [
-    { name = "Maki" }
+    { name = "MakiTazo" }
 ]
 dependencies = [
     "endstone"
