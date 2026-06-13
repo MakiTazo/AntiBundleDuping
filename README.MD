@@ -49,4 +49,4 @@ Instead of blocking players from using containers — which proved ineffective a
 
 ## 📄 License
 
-This project is licensed under the MIT License — see the [LICENCE](./LICENCE) file for details.
+see the [LICENCE](./LICENCE) file for details.
